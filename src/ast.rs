@@ -1,7 +1,8 @@
 #[derive(Debug)]
 pub enum CommandArgument<'a> {
     Text(&'a str),
-    Cmd(Command<'a>)
+    Cmd(Command<'a>),
+    Math(Vec<Math<'a>>)
 }
 
 #[derive(Debug)]
@@ -23,9 +24,26 @@ pub struct Command<'a> {
 }
 
 #[derive(Debug)]
+pub enum MathContents<'a> {
+    Text(&'a str),
+    Cmd(Command<'a>)
+}
+
+#[derive(Debug)]
+pub enum MathMode { Inline, MultiLine }
+
+#[derive(Debug)]
+pub struct Math<'a> {
+    pub mode: MathMode,
+    pub data: Vec<MathContents<'a>>
+}
+
+#[derive(Debug)]
 pub enum Ast<'a> {
     Cmd(Command<'a>),
     Text(&'a str),
+    Math(Math<'a>),
     ScopeOpen,
     ScopeClose,
+    LineBreak
 }

@@ -6,6 +6,9 @@ use crate::ast::Ast;
 use crate::ast::Command;
 use crate::ast::CommandArgument;
 use crate::ast::CommandOption;
+use crate::ast::Math;
+use crate::ast::MathContents;
+use crate::ast::MathMode;
 
 #[derive(Parser)]
 #[grammar = "tex.pest"]
@@ -56,7 +59,7 @@ pub fn parse_cmd_arg(cmd_args: Pairs<Rule>) -> Option<Vec<CommandArgument>> {
                 })
             }
 
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 
@@ -89,13 +92,36 @@ pub fn parse_cmd(cmd: Pairs<Rule>) -> Command {
     Command { name, opts, args }
 }
 
+pub fn parse_math(math: Pair<Rule>) -> Math {
+    let mode = match math.as_rule() {
+        Rule::math_inline => MathMode::Inline,
+        Rule::math_multiline => MathMode::MultiLine,
+
+        _ => unreachable!(),
+    };
+
+    let data = math
+        .into_inner()
+        .map(|pair| match pair.as_rule() {
+            Rule::cmd => MathContents::Cmd(parse_cmd(pair.into_inner())),
+            Rule::text => MathContents::Text(pair.as_str()),
+
+            _ => unreachable!(),
+        })
+        .collect();
+
+    Math { mode, data }
+}
+
 pub fn parse_e(pair: Pair<Rule>) -> Ast {
     match pair.as_rule() {
         Rule::cmd => Ast::Cmd(parse_cmd(pair.into_inner())),
         Rule::text => Ast::Text(pair.as_str()),
+        Rule::math => Ast::Math(parse_math(pair.into_inner().next().unwrap())),
 
         Rule::scope_open => Ast::ScopeOpen,
         Rule::scope_close => Ast::ScopeClose,
+        Rule::linebreak => Ast::LineBreak,
 
         _ => {
             println!("uh oh! got\n{pair:#?}");

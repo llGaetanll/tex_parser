@@ -4,13 +4,18 @@ linespace = _{ " " | "\t" }
 
 COMMENT = _{ !("\\") ~ "%" ~ (!NEWLINE ~ ANY)* }
 
-file = _{ expr* }
+file = _{ SOI ~ expr* }
 expr = _{
     cmd
   | text
+  | math
   | special
 }
 
+
+//
+// COMMANDS
+//
 cmd = ${
    "\\" ~ cmd_name ~ (linespace)* ~ cmd_opts? ~ (linespace)* ~ (cmd_args ~ (linespace)*)*
 }
@@ -39,7 +44,9 @@ cmd_arg_empty = { "{" ~ "}" }
 cmd_arg = { cmd | text }
 
 
-
+//
+// TEXT
+//
 text = { (lparen | rparen | char)+ }
 
 char = _{
@@ -47,7 +54,16 @@ char = _{
 }
 
 special = _{
-  scope_open | scope_close | parbreak | macro | cmd
+    cmd
+  | scope_open
+  | scope_close
+  | math_inline_delim
+  | math_multiline_open
+  | math_multiline_close
+  | linebreak
+  | macro
+
+  // scope_open | scope_close | linebreak | macro | cmd
 }
 
 // escaped
@@ -56,5 +72,21 @@ rparen = _{ "\\}" }
 
 scope_open = { !("\\") ~ "{" }
 scope_close = { !("\\") ~ "}" }
-parbreak = { "\\\\" }
+linebreak = { "\\\\" | "\n\n" }
 macro = { "#" } // TODO: I think these need a number after them? not sure
+
+
+//
+// MATH
+//
+math_inline_delim = _{ "$" }
+math_multiline_open = _{ "\\[" }
+math_multiline_close = _{ "\\]" }
+
+math = {
+  (math_inline_delim ~ math_inline ~ math_inline_delim)
+| (math_multiline_open ~ math_multiline ~ math_multiline_close)
+}
+
+math_inline = { (cmd | text)+ }
+math_multiline = { (cmd | text)+ }
