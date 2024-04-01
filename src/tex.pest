@@ -36,14 +36,7 @@ cmd_args = !{
 }
 
 cmd_arg_empty = { "{" ~ "}" }
-cmd_arg = { cmd | arg_text }
-
-
-// TODO: this is going to get easier
-arg_text = { (arg_char)* }
-arg_char = _{
-  ASCII_ALPHANUMERIC | "." | "?"
-}
+cmd_arg = { cmd | text }
 
 
 

@@ -48,7 +48,7 @@ pub fn parse_cmd_arg(cmd_arg: Pair<Rule>) -> Option<CommandArgument> {
 
             Some(match arg.as_rule() {
                 Rule::cmd => CommandArgument::Cmd(parse_cmd(arg.into_inner())),
-                Rule::arg_text => CommandArgument::Text(arg.as_str()),
+                Rule::text => CommandArgument::Text(arg.as_str()),
 
                 _ => unreachable!(),
             })
@@ -89,8 +89,10 @@ pub fn parse_cmd(cmd: Pairs<Rule>) -> Command {
 pub fn parse_e(pair: Pair<Rule>) -> Ast {
     match pair.as_rule() {
         Rule::cmd => Ast::Cmd(parse_cmd(pair.into_inner())),
-
         Rule::text => Ast::Text(pair.as_str()),
+
+        Rule::scope_open => Ast::ScopeOpen,
+        Rule::scope_close => Ast::ScopeClose,
 
         _ => {
             println!("uh oh! got\n{pair:#?}");

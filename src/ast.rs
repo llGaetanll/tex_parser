@@ -27,4 +27,6 @@ pub struct Command<'a> {
 pub enum Ast<'a> {
     Cmd(Command<'a>),
     Text(&'a str),
+    ScopeOpen,
+    ScopeClose,
 }
