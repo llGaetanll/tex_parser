@@ -16,10 +16,19 @@ macro_rules! test_cmd_sub {
             flatten_rules(&mut results, pairs.clone());
 
             for (k, res) in &results {
-                let exp = expect.get(&k).expect(&format!("failed to find key `{k:?}` in expect"));
-                assert_eq!(res, exp, "\nPairs: {:#?}", &pairs);
+                match expect.get(&k) {
+                    Some(exp) => {
+                        assert_eq!(res, exp, "\nPairs: {:#?}", &pairs);
+                    }
+                    None => {
+                        panic!(
+                            "failed to find key `{:?}` in expect. \nPairs: {:#?}",
+                            k, &pairs
+                        );
+                    }
+                }
             }
-        
+
             Ok(())
         }
     };
@@ -39,10 +48,19 @@ macro_rules! test_cmd_sup {
             flatten_rules(&mut results, pairs.clone());
 
             for (k, exp) in &expect {
-                let res = results.get(&k).expect(&format!("failed to find key `{k:?}` in res"));
-                assert_eq!(res, exp, "\nPairs: {:#?}", &pairs);
+                match results.get(&k) {
+                    Some(res) => {
+                        assert_eq!(res, exp, "\nPairs: {:#?}", &pairs);
+                    }
+                    None => {
+                        panic!(
+                            "failed to find key `{:?}` in results. \nPairs: {:#?}",
+                            k, &pairs
+                        );
+                    }
+                }
             }
-        
+
             Ok(())
         }
     };
@@ -82,7 +100,11 @@ mod commands {
     test_cmd_sub!(
         simple_b,
         r"\b[]",
-        vec![(Rule::cmd, vec![r"\b[]"]), (Rule::cmd_name, vec!["b"]), (Rule::cmd_opts, vec!["[]"])]
+        vec![
+            (Rule::cmd, vec![r"\b[]"]),
+            (Rule::cmd_name, vec!["b"]),
+            (Rule::cmd_opts, vec!["[]"])
+        ]
     );
 
     test_cmd_sub!(
@@ -144,6 +166,30 @@ mod commands {
         vec![
             (Rule::cmd_name, vec!["main", "foo", "bar", "baz"]),
             (Rule::cmd_opt_v, vec!["a", "b", "c"]),
+        ]
+    );
+
+    test_cmd_sub!(
+        simple_spacing_1,
+        r"\a {\b}",
+        vec![
+            (Rule::cmd, vec![r"\a {\b}", r"\b"]),
+            (Rule::cmd_name, vec!["a", "b"]),
+            (Rule::cmd_args, vec![r"{\b}"]),
+            (Rule::cmd_arg, vec![r"\b"]),
+        ]
+    );
+
+    test_cmd_sub!(
+        simple_spacing_2,
+        r"\a              [v]    {\b}",
+        vec![
+            (Rule::cmd, vec![r"\a              [v]    {\b}", r"\b"]),
+            (Rule::cmd_name, vec!["a", "b"]),
+            (Rule::cmd_opts, vec!["[v]"]),
+            (Rule::cmd_opt_v, vec!["v"]),
+            (Rule::cmd_args, vec![r"{\b}"]),
+            (Rule::cmd_arg, vec![r"\b"]),
         ]
     );
 }
