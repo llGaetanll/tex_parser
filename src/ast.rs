@@ -19,8 +19,7 @@ pub struct Command<'a> {
     pub opts: Vec<CommandOption<'a>>,
 
     /// Function arguments.
-    /// `Option` because arguments may be empty
-    pub args: Vec<Option<CommandArgument<'a>>>,
+    pub args: Vec<Option<Vec<CommandArgument<'a>>>>,
 }
 
 #[derive(Debug)]

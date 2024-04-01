@@ -12,7 +12,7 @@ expr = _{
 }
 
 cmd = ${
-   "\\" ~ cmd_name ~ (linespace)* ~ cmd_opts? ~ (linespace)* ~ cmd_args*
+   "\\" ~ cmd_name ~ (linespace)* ~ cmd_opts? ~ (linespace)* ~ (cmd_args ~ (linespace)*)*
 }
 
 cmd_name = { ASCII_ALPHA+ ~ ("*")? }
@@ -32,7 +32,7 @@ cmd_opt_kv = { cmd_opt_k ~ "=" ~ cmd_opt_v }
 // TODO: this should consume a character even if no braces are present
 cmd_args = !{
   cmd_arg_empty
-  | "{" ~ cmd_arg ~ "}"
+  | "{" ~ cmd_arg+ ~ "}"
 }
 
 cmd_arg_empty = { "{" ~ "}" }

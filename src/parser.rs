@@ -39,29 +39,34 @@ pub fn parse_cmd_opts(opts_pairs: Pairs<Rule>) -> Vec<CommandOption> {
         .collect()
 }
 
-pub fn parse_cmd_arg(cmd_arg: Pair<Rule>) -> Option<CommandArgument> {
-    match cmd_arg.as_rule() {
-        Rule::cmd_arg_empty => None,
+pub fn parse_cmd_arg(cmd_args: Pairs<Rule>) -> Option<Vec<CommandArgument>> {
+    let mut args = Vec::new();
 
-        Rule::cmd_arg => {
-            let arg = cmd_arg.into_inner().next().unwrap();
+    for arg in cmd_args {
+        match arg.as_rule() {
+            Rule::cmd_arg_empty => return None,
+            Rule::cmd_arg => {
+                let arg = arg.into_inner().next().unwrap();
 
-            Some(match arg.as_rule() {
-                Rule::cmd => CommandArgument::Cmd(parse_cmd(arg.into_inner())),
-                Rule::text => CommandArgument::Text(arg.as_str()),
+                args.push(match arg.as_rule() {
+                    Rule::cmd => CommandArgument::Cmd(parse_cmd(arg.into_inner())),
+                    Rule::text => CommandArgument::Text(arg.as_str()),
 
-                _ => unreachable!(),
-            })
+                    _ => unreachable!(),
+                })
+            }
+
+            _ => unreachable!()
         }
-
-        _ => unreachable!(),
     }
+
+    Some(args)
 }
 
 pub fn parse_cmd(cmd: Pairs<Rule>) -> Command {
     let mut name = "";
     let mut opts = vec![];
-    let mut args = vec![];
+    let mut args: Vec<Option<Vec<CommandArgument>>> = vec![];
 
     for pair in cmd {
         match pair.as_rule() {
@@ -70,13 +75,11 @@ pub fn parse_cmd(cmd: Pairs<Rule>) -> Command {
             }
 
             Rule::cmd_opts => {
-                let opts_pairs = pair.into_inner();
-                opts = parse_cmd_opts(opts_pairs);
+                opts = parse_cmd_opts(pair.into_inner());
             }
 
             Rule::cmd_args => {
-                let cmd_arg = pair.into_inner().next().unwrap();
-                args.push(parse_cmd_arg(cmd_arg));
+                args.push(parse_cmd_arg(pair.into_inner()));
             }
 
             _ => unreachable!(),

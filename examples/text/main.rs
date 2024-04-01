@@ -14,10 +14,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut data = String::new();
     file.read_to_string(&mut data)?;
 
-    let pairs = TexParser::parse(Rule::file, &data)?;
-    let ast = pairs.map(parse_e).collect::<Vec<_>>();
+    let res = TexParser::parse(Rule::file, &data)?;
+    let res = res.map(parse_e).collect::<Vec<_>>();
 
-    println!("{ast:#?}");
+    println!("{res:#?}");
 
     Ok(())
 }
