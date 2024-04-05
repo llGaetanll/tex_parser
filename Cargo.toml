@@ -1,7 +1,7 @@
 workspace = { members = ["examples/text"] }
 
 [package]
-name = "latex_parser"
+name = "tex_parser"
 version = "0.1.0"
 edition = "2021"
 

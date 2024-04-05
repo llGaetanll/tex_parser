@@ -57,14 +57,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "latex_parser"
-version = "0.1.0"
-dependencies = [
- "pest",
- "pest_derive",
-]
-
-[[package]]
 name = "libc"
 version = "0.2.153"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -168,12 +160,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "tex_parser"
+version = "0.1.0"
+dependencies = [
+ "pest",
+ "pest_derive",
+]
+
+[[package]]
 name = "text"
 version = "0.1.0"
 dependencies = [
- "latex_parser",
  "pest",
  "pest_derive",
+ "tex_parser",
 ]
 
 [[package]]
