@@ -1,8 +1,8 @@
 # `tex_parser`
 
-**⚠️ Warning**: This is **not** a formal TeX parser. TeX [cannot actually be
+**⚠️ Warning**: This is **not** a formal TeX parser. [TeX cannot actually be
 parsed as a context free grammar](https://tex.stackexchange.com/questions/4201/is-there-a-bnf-grammar-of-the-tex-language), and requires a turing machine to handle any
-edge cases
+edge cases.
 
 Despite this, most real world TeX is "well-behaved" enough that a context free
 grammar may suffice. To that end, this library attempts to provide a "best
