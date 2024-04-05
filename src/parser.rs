@@ -1,10 +1,9 @@
 use pest::iterators::Pair;
-use pest::iterators::Pairs;
 use pest_derive::Parser;
 
 use crate::ast::Ast;
 use crate::ast::Command;
-use crate::ast::CommandArgument;
+use crate::ast::CommandArg;
 use crate::ast::CommandOption;
 use crate::ast::Math;
 use crate::ast::MathContents;
@@ -14,82 +13,48 @@ use crate::ast::MathMode;
 #[grammar = "tex.pest"]
 pub struct TexParser;
 
-pub fn parse_cmd_opts(opts_pairs: Pairs<Rule>) -> Vec<CommandOption> {
-    opts_pairs
-        .map(|pair| {
-            let cmd_opt = pair.into_inner().next().unwrap();
+pub fn parse_cmd_opts(opts_pair: Pair<Rule>) -> Vec<CommandOption> {
+    opts_pair
+        .into_inner()
+        .map(|pair| match pair.as_rule() {
+            Rule::cmd_opt_v => {
+                let s = pair.as_str();
 
-            match cmd_opt.as_rule() {
-                Rule::cmd_opt_v => {
-                    let s = cmd_opt.as_str();
-
-                    CommandOption::Value(s)
-                }
-
-                Rule::cmd_opt_kv => {
-                    let [pair_k, pair_v]: [Pair<Rule>; 2] =
-                        cmd_opt.into_inner().collect::<Vec<_>>().try_into().unwrap();
-
-                    let k = pair_k.as_str();
-                    let v = pair_v.as_str();
-
-                    CommandOption::KeyValue(k, v)
-                }
-
-                _ => unreachable!(),
+                CommandOption::Value(s)
             }
+
+            Rule::cmd_opt_kv => {
+                let [pair_k, pair_v]: [Pair<Rule>; 2] =
+                    pair.into_inner().collect::<Vec<_>>().try_into().unwrap();
+
+                let k = pair_k.as_str();
+                let v = pair_v.as_str();
+
+                CommandOption::KeyValue(k, v)
+            }
+
+            _ => unreachable!(),
         })
         .collect()
 }
 
-pub fn parse_cmd_arg(cmd_args: Pairs<Rule>) -> Option<Vec<CommandArgument>> {
-    let mut args = Vec::new();
+pub fn parse_cmd(cmd: Pair<Rule>) -> Command {
+    let mut pairs = cmd.into_inner();
 
-    for arg in cmd_args {
-        match arg.as_rule() {
-            Rule::cmd_arg_empty => return None,
-            Rule::cmd_arg => {
-                let arg = arg.into_inner().next().unwrap();
+    // `cmd_call` is always first
+    let name = pairs.next().unwrap().into_inner().next().unwrap().as_str();
 
-                args.push(match arg.as_rule() {
-                    Rule::cmd => CommandArgument::Cmd(parse_cmd(arg.into_inner())),
-                    Rule::text => CommandArgument::Text(arg.as_str()),
-
-                    _ => unreachable!(),
-                })
-            }
+    // the rest are arguments
+    let args: Vec<_> = pairs
+        .map(|pair| match pair.as_rule() {
+            Rule::cmd_opts => CommandArg::Optional(parse_cmd_opts(pair)),
+            Rule::scope => CommandArg::Required(parse_scope(pair)),
 
             _ => unreachable!(),
-        }
-    }
+        })
+        .collect();
 
-    Some(args)
-}
-
-pub fn parse_cmd(cmd: Pairs<Rule>) -> Command {
-    let mut name = "";
-    let mut opts = vec![];
-    let mut args: Vec<Option<Vec<CommandArgument>>> = vec![];
-
-    for pair in cmd {
-        match pair.as_rule() {
-            Rule::cmd_name => {
-                name = pair.as_str().trim();
-            }
-
-            Rule::cmd_opts => {
-                opts = parse_cmd_opts(pair.into_inner());
-            }
-
-            Rule::cmd_args => {
-                args.push(parse_cmd_arg(pair.into_inner()));
-            }
-
-            _ => unreachable!(),
-        }
-    }
-
-    Command { name, opts, args }
+    Command { name, args }
 }
 
 pub fn parse_math(math: Pair<Rule>) -> Math {
@@ -103,7 +68,7 @@ pub fn parse_math(math: Pair<Rule>) -> Math {
     let data = math
         .into_inner()
         .map(|pair| match pair.as_rule() {
-            Rule::cmd => MathContents::Cmd(parse_cmd(pair.into_inner())),
+            Rule::cmd => MathContents::Cmd(parse_cmd(pair)),
             Rule::text => MathContents::Text(pair.as_str()),
 
             _ => unreachable!(),
@@ -113,14 +78,23 @@ pub fn parse_math(math: Pair<Rule>) -> Math {
     Math { mode, data }
 }
 
+pub fn parse_scope(scope: Pair<Rule>) -> Vec<Ast> {
+    scope
+        .into_inner()
+        .nth(1) // 0 is scope open, 1 is content, 2 is scope close
+        .unwrap()
+        .into_inner()
+        .map(parse_e)
+        .collect()
+}
+
 pub fn parse_e(pair: Pair<Rule>) -> Ast {
     match pair.as_rule() {
-        Rule::cmd => Ast::Cmd(parse_cmd(pair.into_inner())),
+        Rule::cmd => Ast::Cmd(parse_cmd(pair)),
+        Rule::scope => Ast::Scope(parse_scope(pair)),
         Rule::text => Ast::Text(pair.as_str()),
         Rule::math => Ast::Math(parse_math(pair.into_inner().next().unwrap())),
 
-        Rule::scope_open => Ast::ScopeOpen,
-        Rule::scope_close => Ast::ScopeClose,
         Rule::linebreak => Ast::LineBreak,
 
         _ => {

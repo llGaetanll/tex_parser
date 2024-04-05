@@ -1,49 +1,57 @@
-#[derive(Debug)]
-pub enum CommandArgument<'a> {
-    Text(&'a str),
-    Cmd(Command<'a>),
-    Math(Vec<Math<'a>>)
-}
-
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum CommandOption<'a> {
     Value(&'a str),
     KeyValue(&'a str, &'a str),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+pub enum CommandArg<'a> {
+    Optional(Vec<CommandOption<'a>>),
+    Required(Vec<Ast<'a>>),
+}
+
+#[derive(Debug, Clone)]
 pub struct Command<'a> {
     /// The name of the command
     pub name: &'a str,
 
-    /// Any optional arguments go here
-    pub opts: Vec<CommandOption<'a>>,
-
-    /// Function arguments.
-    pub args: Vec<Option<Vec<CommandArgument<'a>>>>,
+    /// Any arguments, optional or required.
+    pub args: Vec<CommandArg<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum MathContents<'a> {
     Text(&'a str),
-    Cmd(Command<'a>)
+    Cmd(Command<'a>),
 }
 
-#[derive(Debug)]
-pub enum MathMode { Inline, MultiLine }
+#[derive(Debug, Clone)]
+pub enum MathMode {
+    Inline,
+    MultiLine,
+}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Math<'a> {
     pub mode: MathMode,
-    pub data: Vec<MathContents<'a>>
+    pub data: Vec<MathContents<'a>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Ast<'a> {
     Cmd(Command<'a>),
     Text(&'a str),
     Math(Math<'a>),
-    ScopeOpen,
-    ScopeClose,
-    LineBreak
+    Scope(Vec<Ast<'a>>),
+    LineBreak,
+    Environment {
+        // the name of the environment is the
+        // contents of the first required argument.
+        name: &'a str,
+
+        // environments might still have command args
+        args: Vec<CommandArg<'a>>,
+
+        contents: Vec<Ast<'a>>,
+    },
 }

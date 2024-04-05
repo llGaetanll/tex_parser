@@ -1,0 +1,21 @@
+These can both be parsed correctly
+
+\foo{
+  bar
+}
+{
+  baz
+}
+
+  \foo{
+    bar
+  }
+  {
+    baz
+  }
+
+
+The downside is that now, this is parsed as a command too
+
+\noin
+{\bf unrelated}

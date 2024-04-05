@@ -1,14 +1,13 @@
-WHITESPACE = _{ linespace | NEWLINE } 
-
 linespace = _{ " " | "\t" }
-
+WHITESPACE = _{ linespace | NEWLINE }
 COMMENT = _{ !("\\") ~ "%" ~ (!NEWLINE ~ ANY)* }
 
 file = _{ SOI ~ expr* }
 expr = _{
     cmd
-  | text
+  | scope
   | math
+  | text
   | special
 }
 
@@ -17,63 +16,50 @@ expr = _{
 // COMMANDS
 //
 cmd = ${
-   "\\" ~ cmd_name ~ (linespace)* ~ cmd_opts? ~ (linespace)* ~ (cmd_args ~ (linespace)*)*
+  cmd_call ~ (WHITESPACE* ~ (cmd_opts | scope))*
 }
 
-cmd_name = { ASCII_ALPHA+ ~ ("*")? }
+cmd_call = ${ "\\" ~ cmd_name }
+cmd_name = @{ ASCII_ALPHA+ ~ ("*")? }
 
 cmd_opts = !{
-  "[" ~ "]"
-
-  | "[" ~ (cmd_opt ~ ",")* ~ cmd_opt ~ "]"
+    "[" ~ "]"
+  | "[" ~ (cmd_opt ~ ","?)* ~ "]"
 }
 
 cmd_opt = _{ cmd_opt_kv | cmd_opt_v }
 
-cmd_opt_v = { cmd | ASCII_ALPHANUMERIC+ } // TODO: this might not be quite right?
 cmd_opt_k = { ASCII_ALPHA+ }
+cmd_opt_v = { cmd | (ASCII_ALPHANUMERIC | ".")+ } // TODO: the text isn't quite right
 cmd_opt_kv = { cmd_opt_k ~ "=" ~ cmd_opt_v }
 
-// TODO: this should consume a character even if no braces are present
-cmd_args = !{
-  cmd_arg_empty
-  | "{" ~ cmd_arg+ ~ "}"
-}
 
-cmd_arg_empty = { "{" ~ "}" }
-cmd_arg = { cmd | text }
+//
+// SCOPE
+//
+scope = { scope_open ~ scope_content ~ scope_close }
+scope_content = { expr* }
+scope_open = @{ !("\\") ~ "{" }
+scope_close = @{ !("\\") ~ "}" }
 
 
 //
 // TEXT
 //
-text = { (lparen | rparen | char)+ }
-
+text = { (escaped | char)+ }
 char = _{
-   !(special) ~ ASCII
+   !(cmd_call | scope_open | scope_close | special) ~ ASCII
 }
 
 special = _{
-    cmd
-  | scope_open
-  | scope_close
-  | math_inline_delim
+    math_inline_delim
   | math_multiline_open
   | math_multiline_close
   | linebreak
-  | macro
-
-  // scope_open | scope_close | linebreak | macro | cmd
 }
 
-// escaped
-lparen = _{ "\\{" }
-rparen = _{ "\\}" }
-
-scope_open = { !("\\") ~ "{" }
-scope_close = { !("\\") ~ "}" }
-linebreak = { "\\\\" | "\n\n" }
-macro = { "#" } // TODO: I think these need a number after them? not sure
+escaped = _{ "\\{" | "\\}" | "\\\"" }
+linebreak = { "\\\\" }
 
 
 //

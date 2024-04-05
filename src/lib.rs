@@ -1,5 +1,6 @@
 pub mod ast;
 pub mod parser;
+pub mod util;
 
-pub use parser::TexParser;
 pub use parser::Rule;
+pub use parser::TexParser;

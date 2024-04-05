@@ -175,8 +175,8 @@ mod commands {
         vec![
             (Rule::cmd, vec![r"\a {\b}", r"\b"]),
             (Rule::cmd_name, vec!["a", "b"]),
-            (Rule::cmd_args, vec![r"{\b}"]),
-            (Rule::cmd_arg, vec![r"\b"]),
+            // (Rule::cmd_args, vec![r"{\b}"]),
+            // (Rule::cmd_arg, vec![r"\b"]),
         ]
     );
 
@@ -188,8 +188,8 @@ mod commands {
             (Rule::cmd_name, vec!["a", "b"]),
             (Rule::cmd_opts, vec!["[v]"]),
             (Rule::cmd_opt_v, vec!["v"]),
-            (Rule::cmd_args, vec![r"{\b}"]),
-            (Rule::cmd_arg, vec![r"\b"]),
+            // (Rule::cmd_args, vec![r"{\b}"]),
+            // (Rule::cmd_arg, vec![r"\b"]),
         ]
     );
 }
